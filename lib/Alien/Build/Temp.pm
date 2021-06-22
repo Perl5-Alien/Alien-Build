@@ -23,7 +23,7 @@ This class is private to L<Alien::Build>.
 # we have to be careful about cleanup.  This puts all that
 # (attempted) carefulness in one place so that when we
 # later discover it isn't so careful we can fix it in
-# one place rather thabn alllll the places that we need
+# one place rather than all the places that we need
 # temp directories.
 
 my %root;

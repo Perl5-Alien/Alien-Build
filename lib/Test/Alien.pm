@@ -107,7 +107,7 @@ be used, via either C<XS> or L<FFI::Platypus>.  It also provides a mechanism for
 testing binaries that are provided by the various L<Alien> modules (for example
 L<Alien::gmake> and L<Alien::patch>).
 
-L<Alien> modules can actually be useable without a compiler, or without L<FFI::Platypus>
+L<Alien> modules can actually be usable without a compiler, or without L<FFI::Platypus>
 (for example, if the library is provided by the system, and you are using L<FFI::Platypus>,
 or if you are building from source and you are using C<XS>), so tests with missing
 prerequisites are automatically skipped.  For example, L</xs_ok> will automatically skip

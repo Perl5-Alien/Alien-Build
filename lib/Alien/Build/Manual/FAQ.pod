@@ -395,7 +395,7 @@ also set the environment variable on just some aliens.
 =head2 For testing I would like to test both system and share installs!
 
 You can use the C<ALIEN_INSTALL_TYPE> environment variable.  It will force either a C<share> or
-C<system> install depending on how it is set.  For travis you can do something like this:
+C<system> install depending on how it is set.  For Travis-CI you can do something like this:
 
  env:
    matrix:

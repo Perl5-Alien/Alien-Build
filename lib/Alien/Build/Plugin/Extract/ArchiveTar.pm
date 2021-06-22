@@ -113,7 +113,7 @@ sub init
 sub _can_bz2
 {
   # even when Archive::Tar reports that it supports bz2, I can sometimes get this error:
-  # 'Cannot read enough bytes from the tarfile', so lets just probe for actual support!
+  # 'Cannot read enough bytes from the tar file', so lets just probe for actual support!
   my $dir = Path::Tiny->new(File::Temp::tempdir( CLEANUP => 1 ));
   eval {
     local $CWD = $dir;

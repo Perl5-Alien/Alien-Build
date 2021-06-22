@@ -358,7 +358,7 @@ sub mm_postamble
                 "_alien/mm/prefix :\n" .
                 "\t\$(FULLPERL) -MAlien::Build::MM=cmd -e prefix \$(INSTALLDIRS) $dirs\n\n";
 
-  # set verson
+  # set version
   $postamble .= "alien_version : _alien/mm/version\n\n" .
                 "_alien/mm/version : _alien/mm/prefix\n" .
                 "\t\$(FULLPERL) -MAlien::Build::MM=cmd -e version \$(VERSION)\n\n";
