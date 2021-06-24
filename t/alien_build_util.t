@@ -47,11 +47,16 @@ subtest 'mirror' => sub {
 
   if($Config{d_symlink})
   {
-    foreach my $new (map { $tmp1->child("lib/libfoo$_") } qw( .so.1.2 .so.1 .so ))
+    my $newdir = $tmp1->child("lib");
+    my $savedir = Path::Tiny->cwd;
+    # CD into the the $newdir such that symlink will work on MSYS2
+    chdir $newdir->stringify or die "unable to chdir to $newdir: $!";
+    foreach my $new (map { "libfoo$_" } qw( .so.1.2 .so.1 .so ))
     {
-      my $old = 'libfoo.so.1.2.3';
-      symlink($old, $new->stringify) || die "unable to symlink $new => $old $!";
+      my $old = $lib->basename;
+      symlink($old, $new) || die "unable to symlink $new => $old $!";
     }
+    chdir $savedir or die "unable to chdir to $savedir: $!";
   }
 
   my $tmp2 = Path::Tiny->tempdir("mirror_dst_XXXX");

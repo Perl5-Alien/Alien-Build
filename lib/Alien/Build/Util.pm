@@ -6,6 +6,7 @@ use 5.008004;
 use Exporter qw( import );
 use Path::Tiny qw( path );
 use Config;
+use File::chdir;
 
 # ABSTRACT: Private utility functions for Alien::Build
 # VERSION
@@ -28,6 +29,21 @@ L<Alien::Build>
 
 our @EXPORT_OK = qw( _mirror _dump _destdir_prefix _perl_config _ssl_reqs _has_ssl );
 
+# This helper sub is intended to be called with string argument "MSYS" or "CYGWIN"
+# According to https://cygwin.com/cygwin-ug-net/using-cygwinenv.html :
+#  The CYGWIN environment variable is used to configure many global settings for the Cygwin
+#  runtime system. It contain options separated by blank characters.
+#  TODO: We assume the same format for the MSYS environment variable. Where is it documented?
+sub _check_native_symlink {
+  my ($var) = @_;
+  if (defined $ENV{$var}) {
+    if ($ENV{$var} =~  /(?:^|\s+)\Qwinsymlinks:nativestrict\E(?:$|\s+)/) {
+      return 1;
+    }
+  }
+  return 0;
+}
+
 # usage: _mirror $source_directory, $dest_direction, \%options
 #
 # options:
@@ -44,7 +60,6 @@ sub _mirror
   require Alien::Build;
   require File::Find;
   require File::Copy;
-
   File::Find::find({
     wanted => sub {
       next unless -e $File::Find::name;
@@ -65,7 +80,37 @@ sub _mirror
         { unlink "$dst" }
         my $target = readlink "$src";
         Alien::Build->log("ln -s $target $dst") if $opt->{verbose};
-        symlink($target, $dst) || die "unable to symlink $target => $dst";
+        if (path($target)->is_relative) {
+          my $nativesymlink = (($^O eq "msys" && _check_native_symlink("MSYS"))
+              || ($^O eq "cygwin" && _check_native_symlink("CYGWIN")));
+          # NOTE: there are two cases to consider here, 1. the target might not
+          #   exist relative to the source dir, and 2. the target might not exist relative
+          #   to the destination directory.
+          #
+          #   1. If the file does not exist relative to the source, it is a broken symlink,
+          #   2. If the file does not exist relative to the destination, it means that
+          #   it has not been copied by this File::Find::find() call yet. So it will only
+          #   be temporarily broken.
+          if (!$src->parent->child($target)->exists) {
+            if ($nativesymlink) {
+              # NOTE: On linux, it is OK to create broken symlinks, but it is not allowed on 
+              #   windows MSYS2/Cygwin when nativestrict is used.
+              die "cannot create native symlink to nonexistent file $target on $^O";
+            }
+          }
+          if ($nativesymlink) {
+            # If the target does not exist relative to the parent yet (it should be existing at the end of
+            #   this File::Find::find() call), make a temporary empty file such that the symlink
+            #   call does not fail.
+            $dst->parent->child($target)->touchpath;
+          }
+        }
+        my $curdir = Path::Tiny->cwd;
+        {
+          local $CWD = $dst->parent;
+          # CD into the directory, such that symlink will work on MSYS2
+          symlink($target, $dst) || die "unable to symlink $target => $dst";
+        }
       }
       elsif(-d "$src")
       {
